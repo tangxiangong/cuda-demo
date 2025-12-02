@@ -1,3 +1,1 @@
-pub mod cuda;
-pub mod seq;
-pub mod par;
+pub mod bm;

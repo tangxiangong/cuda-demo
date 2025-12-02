@@ -6,7 +6,10 @@ build = "build.rs"
 
 [dependencies]
 anyhow = "1"
-cudarc = { version = "0.18.1", features = ["cuda-version-from-build-system"] }
+cudarc = { version = "0.18.1", features = [
+    "cuda-version-from-build-system",
+    "curand",
+] }
 rayon = "1.11"
 
 [dev-dependencies]
@@ -14,5 +17,5 @@ criterion = "0.8"
 diffusionx = "0.8.2"
 
 [[bench]]
-name = "bench"
+name = "bm"
 harness = false
