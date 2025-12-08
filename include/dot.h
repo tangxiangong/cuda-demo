@@ -6,4 +6,6 @@
 
 std::expected<float, std::string> dot_cuda(const std::vector<float> &a, const std::vector<float> &b);
 
+std::expected<float, std::string> dot_cpu(const std::vector<float> &a, const std::vector<float> &b);
+
 float dot_host(const std::vector<float> &a, const std::vector<float> &b);
