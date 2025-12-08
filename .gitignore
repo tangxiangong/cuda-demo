@@ -2,3 +2,5 @@
 build/
 bin/
 lib/
+tile/uv.lock
+tile/.venv
