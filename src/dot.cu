@@ -1,6 +1,16 @@
 #include "dot.cuh"
 #include <cuda_runtime.h>
 
+__inline__ __device__ float warp_reduce_sum(float val)
+{
+    int mask = 0xffffffff;
+    for (int offset = warpSize / 2; offset > 0; offset >>= 1)
+    {
+        val += __shfl_down_sync(mask, val, offset);
+    }
+    return val;
+}
+
 __global__ void dot_kernel(float *out, const float *a, const float *b,
                            size_t n)
 {
@@ -12,22 +22,33 @@ __global__ void dot_kernel(float *out, const float *a, const float *b,
         val = a[idx] * b[idx];
     }
 
-    __shared__ float cache[256];
-    cache[threadIdx.x] = val;
+    val = warp_reduce_sum(val);
+
+    __shared__ float warp_sums[32];
+
+    int lane = threadIdx.x % warpSize;
+    int warp_id = threadIdx.x / warpSize;
+
+    if (lane == 0)
+    {
+        warp_sums[warp_id] = val;
+    }
+
     __syncthreads();
 
-    for (size_t s = blockDim.x / 2; s > 0; s >>= 1)
+    float block_sum = 0.0f;
+    if (warp_id == 0)
     {
-        if (threadIdx.x < s)
+        if (threadIdx.x < (blockDim.x + warpSize - 1) / warpSize)
         {
-            cache[threadIdx.x] += cache[threadIdx.x + s];
+            block_sum = warp_sums[lane];
         }
-        __syncthreads();
+        block_sum = warp_reduce_sum(block_sum);
     }
 
     if (threadIdx.x == 0)
     {
-        atomicAdd(out, cache[0]);
+        atomicAdd(out, block_sum);
     }
 }
 
